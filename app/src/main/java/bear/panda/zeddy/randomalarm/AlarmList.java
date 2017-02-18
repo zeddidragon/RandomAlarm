@@ -2,11 +2,14 @@ package bear.panda.zeddy.randomalarm;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
 import android.support.annotation.BoolRes;
+import android.support.v4.content.WakefulBroadcastReceiver;
+import android.support.v4.os.ParcelableCompat;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.ViewGroup;
@@ -22,6 +25,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ToggleButton;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 public class AlarmList extends AppCompatActivity {
@@ -62,7 +66,7 @@ public class AlarmList extends AppCompatActivity {
                 setAlarm();
             }
         });
-        if(new Build.VERSION.SDK_INT >= 23) {
+        if(Build.VERSION.SDK_INT >= 23) {
             hour = picker.getHour();
             minute = picker.getMinute();
         } else {
@@ -76,17 +80,10 @@ public class AlarmList extends AppCompatActivity {
         if(!isActive) {
             return;
         }
-        Calendar c = Calendar.getInstance();
-        long now = c.getTimeInMillis();
-
-        c.set(Calendar.HOUR, hour);
-        c.set(Calendar.MINUTE, minute);
-        c.set(Calendar.SECOND, 0);
-        c.set(Calendar.MILLISECOND, 0);
-
+        long now = Calendar.getInstance().getTimeInMillis();
         long next = Long.MAX_VALUE;
-        boolean isNext = false;
 
+        boolean isNext = false;
         for(int i = 0; i < activeDays.length; ++i) {
             if(!activeDays[i]) {
                 continue;
@@ -96,13 +93,18 @@ public class AlarmList extends AppCompatActivity {
             // Furthermore, SUNDAY = 1, while my Monday = 0
             int day = (i + 1) % 7 + 1;
 
+            Calendar c = Calendar.getInstance();
+            // HOUR_OF_DAY is not to be confused with HOUR, which only operates with 12 hours
+            c.set(Calendar.HOUR_OF_DAY, hour);
+            c.set(Calendar.MINUTE, minute);
+            c.set(Calendar.SECOND, 0);
+            c.set(Calendar.MILLISECOND, 0);
             c.set(Calendar.DAY_OF_WEEK, day);
             long time = c.getTimeInMillis();
             while(time <= now) {
                 c.add(Calendar.WEEK_OF_YEAR, 1);
                 time = c.getTimeInMillis();
             }
-            c.add(Calendar.WEEK_OF_YEAR, -1);
             if(time < next) {
                 next = time;
                 isNext = true;
@@ -110,7 +112,6 @@ public class AlarmList extends AppCompatActivity {
         }
 
         if(isNext) {
-            Log.i("Time to ring: ", String.format("%d", next));
             manager.setExact(AlarmManager.RTC_WAKEUP, next, pending);
         } else {
             ToggleButton toggle = (ToggleButton) findViewById(R.id.toggleButton);
@@ -147,7 +148,7 @@ public class AlarmList extends AppCompatActivity {
             label.setText(day.getAbbr());
             label.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
             layout.setGravity(R.id.center);
-            layout.setOrientation(1);  // Vertical
+            layout.setOrientation(LinearLayout.VERTICAL);  // Vertical
             layout.addView(box);
             layout.addView(label);
             box.setLayoutParams(boxParams);
@@ -182,14 +183,11 @@ public class AlarmList extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private class AlarmReceiver {
-        public void handleMessage (Message msg){
-            Bundle bundle = msg.getData();
-            int hour = bundle.getInt("time_hour");
-            int minute = bundle.getInt("time_minute");
-            int day = bundle.getInt("time_day");
-            Log.i("alarm", String.format("%d %d:%d", day, hour, minute));
-            alarmOn();
+    private class AlarmReceiver extends WakefulBroadcastReceiver {
+        @Override
+        public void onReceive (Context context, Intent intent){
+            Log.i("alarm", "ALARM!!!!");
+            setAlarm();
         }
     }
 }
