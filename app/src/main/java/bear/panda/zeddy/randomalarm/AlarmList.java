@@ -2,17 +2,13 @@ package bear.panda.zeddy.randomalarm;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Message;
-import android.support.annotation.BoolRes;
-import android.support.v4.content.WakefulBroadcastReceiver;
-import android.support.v4.os.ParcelableCompat;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -32,51 +28,103 @@ public class AlarmList extends AppCompatActivity {
     protected static Boolean[] activeDays =
             new Boolean[]{ true, true, true, true, true, false, false };
     private AlarmManager manager;
-    private Intent soundTheAlarm;
     private PendingIntent pending;
     private int hour = 0;
     private int minute = 0;
-    protected boolean isActive;
-
+    private boolean isActive;
+    private SharedPreferences settings;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        settings = getSharedPreferences("clock_settings", 0);
         manager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        soundTheAlarm = new Intent(AlarmList.this, AlarmReceiver.class);
+        Intent soundTheAlarm = new Intent(AlarmList.this, AlarmReceiver.class);
         pending = PendingIntent.getBroadcast(AlarmList.this, 0, soundTheAlarm, 0);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alarm_list);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 
-        addDays();
+
         ToggleButton toggle = (ToggleButton) findViewById(R.id.toggleButton);
+        TimePicker picker = (TimePicker) findViewById(R.id.timePicker);
+
+        loadSettings();
+
+        if(Build.VERSION.SDK_INT >= 23) {
+            picker.setHour(hour);
+            picker.setMinute(minute);
+        } else {
+            picker.setCurrentHour(hour);
+            picker.setCurrentMinute(minute);
+        }
+        toggle.setChecked(isActive);
+
+        addDays();
         toggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 isActive = isChecked;
+                saveSettings();
                 setAlarm();
             }
         });
-        TimePicker picker = (TimePicker) findViewById(R.id.timePicker);
         picker.setOnTimeChangedListener(new TimePicker.OnTimeChangedListener() {
             @Override
             public void onTimeChanged(TimePicker view, int hourOfDay, int minuteOfHour) {
                 hour = hourOfDay;
                 minute = minuteOfHour;
+                saveSettings();
                 setAlarm();
             }
         });
-        if(Build.VERSION.SDK_INT >= 23) {
-            hour = picker.getHour();
-            minute = picker.getMinute();
-        } else {
-            hour = picker.getCurrentHour();
-            minute = picker.getCurrentMinute();
+        Button debugger = (Button) findViewById(R.id.debugButton);
+        debugger.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i("Clicky clicky", "click");
+                manager.cancel(pending);
+                RingaDing.fulfill();
+                manager.setExact(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), pending);
+            }
+        });
+    }
+
+    private void loadSettings() {
+        Calendar c = Calendar.getInstance();
+        decodeDays(settings.getInt("days", 0b0011111));
+        hour = settings.getInt("hour", c.get(Calendar.HOUR_OF_DAY));
+        minute = settings.getInt("minute", c.get(Calendar.MINUTE));
+        isActive = settings.getBoolean("active", false);
+    }
+
+    private void saveSettings() {
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putInt("days", encodeDays());
+        editor.putInt("hour", hour);
+        editor.putInt("minute", minute);
+        editor.putBoolean("active", isActive);
+        editor.commit();
+    }
+
+    private void decodeDays(int active) {
+        for(int i = 0; i < activeDays.length; ++i) {
+            activeDays[i] = (active & (int) Math.pow(2, i)) > 0;
         }
+    }
+
+    private int encodeDays() {
+        int ret = 0;
+        for(int i = 0; i < activeDays.length; ++i) {
+            if(activeDays[i]) {
+                ret += (int) Math.pow(2, i);
+            }
+        }
+        return ret;
     }
 
     public void setAlarm() {
         manager.cancel(pending);
+        RingaDing.fulfill();
         if(!isActive) {
             return;
         }
@@ -112,6 +160,8 @@ public class AlarmList extends AppCompatActivity {
         }
 
         if(isNext) {
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+            Log.i("alarm at", format.format(next));
             manager.setExact(AlarmManager.RTC_WAKEUP, next, pending);
         } else {
             ToggleButton toggle = (ToggleButton) findViewById(R.id.toggleButton);
@@ -162,6 +212,7 @@ public class AlarmList extends AppCompatActivity {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     activeDays[index] = isChecked;
+                    saveSettings();
                     setAlarm();
                 }
             });
@@ -181,13 +232,5 @@ public class AlarmList extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    private class AlarmReceiver extends WakefulBroadcastReceiver {
-        @Override
-        public void onReceive (Context context, Intent intent){
-            Log.i("alarm", "ALARM!!!!");
-            setAlarm();
-        }
     }
 }

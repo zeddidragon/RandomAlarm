@@ -37,4 +37,12 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true" />
 
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="RING MOTHERFUCKER"
+        android:id="@+id/debugButton"
+        android:layout_above="@+id/toggleButton"
+        android:layout_alignParentStart="true" />
+
 </RelativeLayout>
