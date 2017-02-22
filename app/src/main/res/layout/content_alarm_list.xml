@@ -13,19 +13,12 @@
     tools:context="bear.panda.zeddy.randomalarm.AlarmList"
     tools:showIn="@layout/activity_alarm_list">
 
-    <TimePicker
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/timePicker"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true" />
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/days"
-        android:layout_below="@+id/timePicker"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:layout_alignParentStart="true">
     </LinearLayout>
 
     <ToggleButton
@@ -37,12 +30,12 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true" />
 
-    <Button
+    <TimePicker
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="RING MOTHERFUCKER"
-        android:id="@+id/debugButton"
-        android:layout_above="@+id/toggleButton"
-        android:layout_alignParentStart="true" />
+        android:id="@+id/timePicker"
+        android:layout_below="@+id/days"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="107dp" />
 
 </RelativeLayout>

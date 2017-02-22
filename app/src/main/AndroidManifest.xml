@@ -9,7 +9,12 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <receiver android:name=".AlarmReceiver" />
+        <receiver android:name=".AlarmReceiver" android:enabled="true" />
+        <receiver android:name=".RebootReceiver" android:enabled="true" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
         <intentservice
             android:name="com.example.broadcasttest.MonitorService"
             android:enabled="true" >

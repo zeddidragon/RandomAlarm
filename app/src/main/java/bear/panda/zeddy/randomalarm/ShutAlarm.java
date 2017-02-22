@@ -16,5 +16,6 @@ public class ShutAlarm extends IntentService {
     public void onHandleIntent(Intent intent) {
         RingaDing.fulfill();
         NotificationManagerCompat.from(this).cancel(1);
+        AlarmList.setAlarm(getApplicationContext());
     }
 }
