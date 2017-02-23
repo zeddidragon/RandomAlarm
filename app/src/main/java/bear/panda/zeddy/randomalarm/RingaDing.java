@@ -20,7 +20,6 @@ import java.util.Random;
  * Created by zeddy on 22/02/2017.
  */
 public class RingaDing extends IntentService {
-    public static final String ACTION_SHUT_ALARM = "action_shut_alarm";
     static int userVolume;
     static Intent incompleteWakeful;
     static AudioManager aManager;
@@ -30,6 +29,7 @@ public class RingaDing extends IntentService {
         if(incompleteWakeful == null) return;
         aManager.setStreamVolume(AudioManager.STREAM_ALARM, userVolume, 1);
         mPlayer.stop();
+        mPlayer.release();
         AlarmReceiver.completeWakefulIntent(incompleteWakeful);
         incompleteWakeful = null;
         aManager = null;
@@ -68,7 +68,16 @@ public class RingaDing extends IntentService {
                 R.raw.alarm15,
                 R.raw.alarm16,
                 R.raw.alarm17,
-                R.raw.alarm18
+                R.raw.alarm18,
+                R.raw.alarm19,
+                R.raw.alarm20,
+                R.raw.alarm21,
+                R.raw.alarm22,
+                R.raw.alarm23,
+                R.raw.alarm24,
+                R.raw.alarm25,
+                R.raw.alarm26,
+                R.raw.alarm27
         };
         Random rng = new Random();
         int tone = alarms[rng.nextInt(alarms.length)];
@@ -103,9 +112,8 @@ public class RingaDing extends IntentService {
                 .setContentTitle("WAKE UP")
                 .setContentText("It's time.")
                 .setAutoCancel(false)
-                .addAction(R.drawable.notification_alarm, "SHUT UP", pendingShutAlarm)
+                .setContentIntent(pendingShutAlarm)
                 .build();
-        n.flags |= Notification.FLAG_NO_CLEAR;
 
         nManager.notify(1, n);
         mPlayer.start();

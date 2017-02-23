@@ -38,11 +38,10 @@ public class AlarmList extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alarm_list);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-
 
         toggle = (ToggleButton) findViewById(R.id.toggleButton);
         TimePicker picker = (TimePicker) findViewById(R.id.timePicker);
+        picker.setIs24HourView(true);
 
         loadSettings(getApplicationContext());
 
